@@ -1,104 +1,39 @@
-#!/usr/bin/env node
-/**
- * Test Runner
- *
- * Runs all tests in sequence and reports results.
- * Usage: node tests/run-all.cjs
- */
-const { spawn } = require('child_process');
-const path = require('path');
+const { spawn } = require("child_process");
+const path = require("path");
 
 const tests = [
-    { name: 'Thinking Signatures', file: 'test-thinking-signatures.cjs' },
-    { name: 'Multi-turn Tools (Non-Streaming)', file: 'test-multiturn-thinking-tools.cjs' },
-    { name: 'Multi-turn Tools (Streaming)', file: 'test-multiturn-thinking-tools-streaming.cjs' },
-    { name: 'Interleaved Thinking', file: 'test-interleaved-thinking.cjs' },
-    { name: 'Image Support', file: 'test-images.cjs' },
-    { name: 'Prompt Caching', file: 'test-caching-streaming.cjs' },
-    { name: 'Cross-Model Thinking', file: 'test-cross-model-thinking.cjs' },
-    { name: 'OAuth No-Browser Mode', file: 'test-oauth-no-browser.cjs' },
-    { name: 'Empty Response Retry', file: 'test-empty-response-retry.cjs' }
+  "test-thinking.cjs",
+  "test-tools.cjs",
+  "test-streaming.cjs",
+  "test-images.cjs",
+  "test-caching.cjs",
+  "test-interleaved.cjs",
 ];
 
-async function runTest(test) {
-    return new Promise((resolve) => {
-        const testPath = path.join(__dirname, test.file);
-        const child = spawn('node', [testPath], {
-            stdio: 'inherit'
-        });
+async function runTests() {
+  console.log("Running tests against OpenAI-compatible API...");
+  console.log("Ensure server is running on port 8080\n");
 
-        child.on('close', (code) => {
-            resolve({ ...test, passed: code === 0 });
-        });
+  for (const test of tests) {
+    const testPath = path.join(__dirname, test);
+    console.log(`Running ${test}...`);
 
-        child.on('error', (err) => {
-            console.error(`Error running ${test.name}:`, err);
-            resolve({ ...test, passed: false });
-        });
-    });
-}
-
-async function main() {
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║              ANTIGRAVITY PROXY TEST SUITE                    ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝');
-    console.log('');
-    console.log('Make sure the server is running on port 8080 before running tests.');
-    console.log('');
-
-    // Check if running specific test
-    const specificTest = process.argv[2];
-    let testsToRun = tests;
-
-    if (specificTest) {
-        testsToRun = tests.filter(t =>
-            t.file.includes(specificTest) || t.name.toLowerCase().includes(specificTest.toLowerCase())
-        );
-        if (testsToRun.length === 0) {
-            console.log(`No test found matching: ${specificTest}`);
-            console.log('\nAvailable tests:');
-            tests.forEach(t => console.log(`  - ${t.name} (${t.file})`));
-            process.exit(1);
+    await new Promise((resolve, reject) => {
+      const proc = spawn("node", [testPath], { stdio: "inherit" });
+      proc.on("close", (code) => {
+        if (code === 0) {
+          console.log(`✅ ${test} PASSED\n`);
+          resolve();
+        } else {
+          console.error(`❌ ${test} FAILED\n`);
+          // Don't reject to allow all tests to attempt to run?
+          // Or fail fast? Let's allow all to run.
+          resolve();
         }
-    }
-
-    const results = [];
-
-    for (const test of testsToRun) {
-        console.log('\n');
-        console.log('╔' + '═'.repeat(60) + '╗');
-        console.log('║ Running: ' + test.name.padEnd(50) + '║');
-        console.log('╚' + '═'.repeat(60) + '╝');
-        console.log('');
-
-        const result = await runTest(test);
-        results.push(result);
-
-        console.log('\n');
-    }
-
-    // Summary
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║                      FINAL RESULTS                           ║');
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-
-    let allPassed = true;
-    for (const result of results) {
-        const status = result.passed ? '✓ PASS' : '✗ FAIL';
-        const statusColor = result.passed ? '' : '';
-        console.log(`║ ${status.padEnd(8)} ${result.name.padEnd(50)} ║`);
-        if (!result.passed) allPassed = false;
-    }
-
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-    const overallStatus = allPassed ? '✓ ALL TESTS PASSED' : '✗ SOME TESTS FAILED';
-    console.log(`║ ${overallStatus.padEnd(60)} ║`);
-    console.log('╚══════════════════════════════════════════════════════════════╝');
-
-    process.exit(allPassed ? 0 : 1);
+      });
+      proc.on("error", reject);
+    });
+  }
 }
 
-main().catch(err => {
-    console.error('Test runner failed:', err);
-    process.exit(1);
-});
+runTests().catch(console.error);

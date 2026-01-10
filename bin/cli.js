@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { readFileSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Read package.json for version
 const packageJson = JSON.parse(
-  readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')
+  readFileSync(join(__dirname, "..", "package.json"), "utf-8")
 );
 
 const args = process.argv.slice(2);
@@ -17,12 +17,12 @@ const command = args[0];
 
 function showHelp() {
   console.log(`
-antigravity-claude-proxy v${packageJson.version}
+antigravity-proxy v${packageJson.version}
 
-Proxy server for using Antigravity's Claude models with Claude Code CLI.
+Proxy server for using Antigravity models via OpenAI-compatible API.
 
 USAGE:
-  antigravity-claude-proxy <command> [options]
+  antigravity-proxy <command> [options]
 
 COMMANDS:
   start                 Start the proxy server (default port: 8080)
@@ -41,18 +41,10 @@ ENVIRONMENT:
   PORT                  Server port (default: 8080)
 
 EXAMPLES:
-  antigravity-claude-proxy start
-  PORT=3000 antigravity-claude-proxy start
-  antigravity-claude-proxy accounts add
-  antigravity-claude-proxy accounts list
-
-CONFIGURATION:
-  Claude Code CLI (~/.claude/settings.json):
-    {
-      "env": {
-        "ANTHROPIC_BASE_URL": "http://localhost:8080"
-      }
-    }
+  antigravity-proxy start
+  PORT=3000 antigravity-proxy start
+  antigravity-proxy accounts add
+  antigravity-proxy accounts list
 `);
 }
 
@@ -62,37 +54,37 @@ function showVersion() {
 
 async function main() {
   // Handle flags
-  if (args.includes('--help') || args.includes('-h')) {
+  if (args.includes("--help") || args.includes("-h")) {
     showHelp();
     process.exit(0);
   }
 
-  if (args.includes('--version') || args.includes('-v')) {
+  if (args.includes("--version") || args.includes("-v")) {
     showVersion();
     process.exit(0);
   }
 
   // Handle commands
   switch (command) {
-    case 'start':
+    case "start":
     case undefined:
       // Default to starting the server
-      await import('../src/index.js');
+      await import("../src/index.js");
       break;
 
-    case 'accounts': {
+    case "accounts": {
       // Pass remaining args to accounts CLI
-      const subCommand = args[1] || 'add';
-      process.argv = ['node', 'accounts-cli.js', subCommand, ...args.slice(2)];
-      await import('../src/cli/accounts.js');
+      const subCommand = args[1] || "add";
+      process.argv = ["node", "accounts-cli.js", subCommand, ...args.slice(2)];
+      await import("../src/cli/accounts.js");
       break;
     }
 
-    case 'help':
+    case "help":
       showHelp();
       break;
 
-    case 'version':
+    case "version":
       showVersion();
       break;
 
@@ -104,6 +96,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('Error:', err.message);
+  console.error("Error:", err.message);
   process.exit(1);
 });
