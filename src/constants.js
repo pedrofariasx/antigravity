@@ -81,10 +81,10 @@ export const DEFAULT_PORT = parseInt(process.env.PORT) || 8080;
 export const PROXY_API_KEY = process.env.PROXY_API_KEY;
 
 // Multi-account configuration
-export const ACCOUNT_CONFIG_PATH = join(
-  homedir(),
-  ".config/antigravity/accounts.json"
-);
+const CONFIG_DIR =
+  process.env.ANTIGRAVITY_CONFIG_DIR || join(homedir(), ".config/antigravity");
+
+export const ACCOUNT_CONFIG_PATH = join(CONFIG_DIR, "accounts.json");
 
 // Antigravity app database path (for legacy single-account token extraction)
 // Uses platform-specific path detection
