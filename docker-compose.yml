@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  antigravity:
+    image: antigravity:latest
+    build: .
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.antigravity.rule=Host(`seu.dominio.com`)"
+        - "traefik.http.routers.antigravity.entrypoints=websecure"
+        - "traefik.http.routers.antigravity.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.antigravity.loadbalancer.server.port=8080"
+
+    environment:
+      - PORT=8080
+      - ANTIGRAVITY_CONFIG_DIR=/app/data
+      # - WEBUI_PASSWORD=sua_senha_aqui # Descomente para definir senha da WebUI
+
+    networks:
+      - rede_interna
+
+    volumes:
+      - antigravity_data:/app/data
+
+networks:
+  rede_interna:
+    external: true
+
+volumes:
+  antigravity_data:
