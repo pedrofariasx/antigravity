@@ -8,10 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (including dev for build)
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Copy app source
 COPY . .
+
+# Build CSS
+RUN npm run build:css
 
 # Create directory for persistent config/db
 RUN mkdir -p /root/.config/antigravity
