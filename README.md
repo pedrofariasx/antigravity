@@ -1,6 +1,5 @@
 # Antigravity Proxy
 
-[![npm version](https://img.shields.io/npm/v/antigravity.svg)](https://www.npmjs.com/package/antigravity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Antigravity Proxy** allows you to use powerful Google Gemini models (via Antigravity Cloud Code) with any application that supports the **OpenAI API**.
