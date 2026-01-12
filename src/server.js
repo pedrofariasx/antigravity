@@ -22,6 +22,13 @@ import {
   convertAnthropicToOpenAI,
   convertAnthropicStreamToOpenAI,
 } from "./format/openai-converter.js";
+import { mountWebUI } from "./webui/index.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import usageStats from "./modules/usage-stats.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Parse fallback flag directly from command line args to avoid circular dependency
 const args = process.argv.slice(2);
@@ -70,6 +77,12 @@ async function ensureInitialized() {
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
+
+// Setup usage statistics middleware
+usageStats.setupMiddleware(app);
+
+// Mount WebUI (optional web interface for account management)
+mountWebUI(app, __dirname, accountManager);
 
 // Auth Middleware
 app.use((req, res, next) => {
@@ -301,6 +314,7 @@ app.get("/account-limits", async (req, res) => {
     await ensureInitialized();
     const allAccounts = accountManager.getAllAccounts();
     const format = req.query.format || "json";
+    const includeHistory = req.query.includeHistory === "true";
 
     // Fetch quotas for each account in parallel
     const results = await Promise.allSettled(
@@ -498,7 +512,7 @@ app.get("/account-limits", async (req, res) => {
     }
 
     // Default: JSON format
-    res.json({
+    const response = {
       timestamp: new Date().toLocaleString(),
       totalAccounts: allAccounts.length,
       models: sortedModels,
@@ -526,7 +540,13 @@ app.get("/account-limits", async (req, res) => {
           })
         ),
       })),
-    });
+    };
+
+    if (includeHistory) {
+      response.history = usageStats.getHistory();
+    }
+
+    res.json(response);
   } catch (error) {
     res.status(500).json({
       status: "error",
@@ -851,6 +871,8 @@ app.post("/v1/chat/completions", async (req, res) => {
 /**
  * Catch-all for unsupported endpoints
  */
+usageStats.setupRoutes(app);
+
 app.use("*", (req, res) => {
   if (logger.isDebugEnabled) {
     logger.debug(`[API] 404 Not Found: ${req.method} ${req.originalUrl}`);
